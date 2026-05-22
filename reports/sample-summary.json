@@ -1,0 +1,10 @@
+{
+  "counts": {
+    "matched": 21,
+    "conflicting": 1,
+    "unmatched_user": 4,
+    "unmatched_exchange": 3
+  },
+  "reportPath": "/mnt/data/koinx_reconciliation_engine/reports/sample-reconciliation-report.csv",
+  "unmatchedPath": "/mnt/data/koinx_reconciliation_engine/reports/sample-unmatched-only.csv"
+}
