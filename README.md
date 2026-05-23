@@ -161,4 +161,4 @@ node scripts/run-reconciliation-memory.js
    - ❌ unmatched (user only): 4
    - ❌ unmatched (exchange only): 3
 
-*💡 If you see `MongooseServerSelectionError: connect ECONNREFUSED 127.0.0.1:27017`, MongoDB is not running locally — either start Docker or use the in-memory helper above.*
+💡 If you see `MongooseServerSelectionError: connect ECONNREFUSED 127.0.0.1:27017`, MongoDB is not running locally — either start Docker or use the in-memory helper above.

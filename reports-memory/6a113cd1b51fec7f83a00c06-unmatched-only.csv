@@ -1,0 +1,8 @@
+index,category,reason,user_transaction_id,user_timestamp,user_type,user_direction,user_asset,user_quantity,user_price_usd,user_fee,user_note,user_row_number,user_issues,exchange_transaction_id,exchange_timestamp,exchange_type,exchange_direction,exchange_asset,exchange_quantity,exchange_price_usd,exchange_fee,exchange_note,exchange_row_number,exchange_issues
+1,unmatched_user,invalid timestamp: 2024-03-09T,USR-018,,SELL,,ETH,0.3,3510,0.0003,Malformed timestamp,20,invalid timestamp: 2024-03-09T,,,,,,,,,,,
+2,unmatched_user,invalid timestamp: 2024-03-12T; missing type,USR-024,,,,BTC,0.4,62800,0.0004,Missing timestamp entirely,26,invalid timestamp: 2024-03-12T; missing type,,,,,,,,,,,
+4,unmatched_user,duplicate transaction_id in user file,USR-001,2024-03-01T09:00:00.000Z,BUY,,BTC,0.5,62000,0.0005,Monthly DCA,17,duplicate transaction_id in user file,,,,,,,,,,,
+21,unmatched_user,non-positive quantity: -0.1,USR-019,2024-03-10T08:00:00.000Z,BUY,,BTC,-0.1,62000,0.0001,Negative quantity - data error,21,non-positive quantity: -0.1,,,,,,,,,,,
+27,unmatched_exchange,no candidate found in user file,,,,,,,,,,,,EXC-1018,2024-03-09T17:00:00.000Z,SELL,,ETH,0.3,3510,0.0003,,19,
+28,unmatched_exchange,no candidate found in user file,,,,,,,,,,,,EXC-1024,2024-03-13T18:00:00.000Z,BUY,,ETH,0.6,3490,0.0006,Not present in user file,25,
+29,unmatched_exchange,no candidate found in user file,,,,,,,,,,,,EXC-1025,2024-03-14T10:00:00.000Z,SELL,,BTC,0.2,63500,0.0002,Not present in user file,26,
