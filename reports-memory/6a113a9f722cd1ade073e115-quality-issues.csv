@@ -1,5 +1,0 @@
-source,rowNumber,transactionId,reason
-user,17,USR-001,duplicate transaction_id in user file
-user,20,USR-018,invalid timestamp: 2024-03-09T
-user,21,USR-019,non-positive quantity: -0.1
-user,26,USR-024,invalid timestamp: 2024-03-12T; missing type
