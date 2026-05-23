@@ -1,4 +1,4 @@
-# 🚀 KoinX Backend Take Home — Reconciliation Engine ⚙️
+# 🚀 KoinX Backend — Reconciliation Engine ⚙️
 
 A production-style Node.js service that ingests user and exchange CSV exports, normalizes messy data, matches transactions, and generates a reconciliation report. 🛠️
 
