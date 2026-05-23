@@ -1,127 +1,199 @@
 # KoinX Backend Take-Home — Reconciliation Engine
-✨ **KoinX Backend Take-Home — Reconciliation Engine** ✨
+# 🚀 KoinX Backend Take Home — Reconciliation Engine ⚙️
 
-A compact, developer-friendly Node.js service that ingests CSV exports from a user wallet and an exchange, normalizes messy real-world data, attempts to match records across both sources, and produces human-readable reconciliation reports. 🚀
+A production-style Node.js service that ingests user and exchange CSV exports, normalizes messy data, matches transactions, and generates a reconciliation report. 🛠️
 
-This repo runs locally with or without Docker and is optimized for quick reproducible runs.
+## ✨ What is included
 
-What you'll find 📦
+ 📥 CSV ingestion with quality checks
+ 🗄️ MongoDB storage for ingested rows and reconciliation runs
+ 🧩 Matching engine with configurable tolerances
+ 📊 CSV reconciliation report generation
+ 🌐 REST API endpoints for runs, counts, report, and unmatched rows
+ 💻 CLI script to run reconciliation locally
+ 📂 Sample input files from the assignment
+ 🧪 Unit tests for normalization helpers
 
-- ✅ CSV ingestion with per-row data-quality checks
-- 🛠️ Normalization helpers (timestamps, quantities, asset/type aliases)
-- ⚖️ A configurable matching engine with tolerance settings
-- 🧾 CSV report generation (full report, unmatched-only, and quality-issues)
-- 🔌 Small REST API to trigger runs and fetch reports
-- 🧭 CLI helpers: one for a real MongoDB and a convenience in-memory runner for quick runs
-- 🧪 Tests covering normalization and integration using mongodb-memory-server
+## 🤔 Assumptions and decisions
 
-Quick decisions & assumptions ⚙️
+1. **🗺️ Type mapping**
+ `TRANSFER_OUT` on the user file matches `TRANSFER_IN` on the exchange file.
+ Transfer records are normalized to a shared canonical type `TRANSFER` and matched by opposite direction.
 
-- 🔁 Transfers: transfer directions are canonicalized so opposite-direction transfer rows can match.
-- 🔡 Asset aliases: common names (e.g. `bitcoin`) are normalized to short symbols (BTC, ETH).
-- ⏱️ Tolerances: timestamp and quantity tolerances are configurable and determine whether a pair is `matched`, `conflicting`, or `unmatched`.
-- ⚠️ Bad rows: rows with parsing/quality issues are retained and surfaced (they are not silently dropped).
 
-Getting started (copy-paste) 🧭
+2. **🏷️ Asset aliases**
+ Common aliases are normalized case-insensitively.
+ Example: `bitcoin` → `BTC`.
 
-1) Install dependencies
+
+3. **⏱️ Tolerance interpretation**
+ `TIMESTAMP_TOLERANCE_SECONDS=300` means a 5-minute window.
+ `QUANTITY_TOLERANCE_PERCENT=0.01` means 0.01% relative quantity tolerance.
+
+
+4. **🚫 Bad rows are not dropped**
+ Invalid rows are stored with issues.
+ They appear in the unmatched output with a clear reason.
+
+
+5. **👯 Duplicates**
+ Duplicate transaction IDs are retained and flagged.
+ Only one row can match a given counterparty record.
+
+
+6. **⚠️ Conflict handling**
+ If a near candidate exists but quantity or timestamp exceeds tolerance, the row is marked `conflicting`.
+
+
+
+## 📁 Project structure
+
+ 🛠️ `src/services/ingestionService.js` — CSV parsing, normalization, and quality logging
+ 🧠 `src/services/matchingService.js` — reconciliation algorithm
+ 📝 `src/services/reportService.js` — CSV report generation
+ 🚂 `src/services/reconciliationService.js` — orchestration
+ 🛣️ `src/routes/` — REST API routes
+ 🏗️ `src/models/` — MongoDB schemas
+ 📜 `scripts/run-reconciliation.js` — local runner
+
+## ⚙️ Setup
+
+### 1) 📦 Install dependencies
 
 ```bash
 npm install
+
 ```
 
-2) Run with Docker (recommended) 🐳
+### 2) 🐳 Start MongoDB
 
 ```bash
-# Start MongoDB
 docker compose up -d
 
-# Start the API server (default PORT=3000)
-npm start
 ```
 
-3) Run without Docker (in-memory MongoDB) 🧠
+### 3) 🔧 Configure environment
 
-If you don't want to run MongoDB locally, use the in-memory helper which writes outputs under `reports-memory/`:
+Copy `.env.example` to `.env` and adjust if needed.
+
+### 4) 🚀 Run the API
 
 ```bash
-node scripts/run-reconciliation-memory.js
+npm start
+
 ```
 
-4) Run the CLI against a running MongoDB
+### 5) 🖥️ Run reconciliation from the CLI
 
 ```bash
 node scripts/run-reconciliation.js --user data/user_transactions.csv --exchange data/exchange_transactions.csv
+
 ```
 
-5) Run tests 🧪
+### 6) 📡 Trigger via API
 
 ```bash
-npm test
+POST /api/reconcile
+
 ```
 
-API quick examples 🔍
+Optional body:
 
-- Trigger a run (POST):
+```json
+{
+	"timestampToleranceSeconds": 300,
+	"quantityTolerancePercent": 0.01,
+	"userFilePath": "data/user_transactions.csv",
+	"exchangeFilePath": "data/exchange_transactions.csv"
+}
+
+```
+
+### 7) 🔍 Fetch results
+
+ GET /api/runs/:runId
+ GET /api/runs/:runId/counts
+ GET /api/runs/:runId/report
+ GET /api/runs/:runId/unmatched
+
+## 📝 Notes on the sample data
+
+The provided files contain:
+
+ 🔁 duplicate transaction IDs
+ ⏰ malformed timestamps
+ ❓ missing timestamp/type values
+ ➖ negative quantity data errors
+ 🔄 transfer perspective differences
+ 📏 one quantity mismatch outside the configured tolerance
+
+These are all handled and surfaced in the output. ✅
+
+## 💻 API examples
 
 ```bash
-curl -X POST http://localhost:3000/api/reconcile \
-	-H "Content-Type: application/json" \
-	-d '{"timestampToleranceSeconds":300,"quantityTolerancePercent":0.01}'
-```
+curl -X POST http://localhost:3000/api/reconcile   -H "Content-Type: application/json"   -d '{"timestampToleranceSeconds":300,"quantityTolerancePercent":0.01}'
 
-- Fetch run counts and report URLs:
+```
 
 ```bash
 curl http://localhost:3000/api/runs/<RUN_ID>/counts
 curl http://localhost:3000/api/runs/<RUN_ID>/report
 curl http://localhost:3000/api/runs/<RUN_ID>/unmatched
+
 ```
 
-Files produced 📁
+## 🏠 Running Locally (sample run and outputs)
 
-- Full reconciliation report CSV: `reports/<RUN_ID>-reconciliation-report.csv`
-- Unmatched-only CSV: `reports/<RUN_ID>-unmatched-only.csv`
-- Quality issues CSV: `reports/<RUN_ID>-quality-issues.csv`
+Follow these commands from the repository root. If you have Docker available, start MongoDB with Docker; otherwise the repository includes a helper that runs using an in-memory Mongo for convenience.
 
-If you use the in-memory helper, outputs are written in `reports-memory/` instead.
+ 💻 Install dependencies:
 
-Sample expected summary (from a typical run) 📊
+```bash
+npm install
 
-- ✅ matched: 21
-- ⚠️ conflicting: 1
-- 🟡 unmatched (user only): 4
-- 🔴 unmatched (exchange only): 3
+```
 
-Troubleshooting 🩺
+ 🐳 Start MongoDB (recommended) via Docker Compose:
 
-- If you see `MongooseServerSelectionError` or `ECONNREFUSED 127.0.0.1:27017`, MongoDB is not running locally. Either start Docker Compose or use the in-memory runner above.
-- If the API reports `EADDRINUSE` when starting, another process is already bound to the configured port. Restart with `PORT=<port> npm start` or stop the conflicting process.
+```bash
+docker compose up -d
 
-Design notes (short) 💡
+```
 
-- Data quality first: every raw row keeps a list of `issues` so you can audit why a row did not match.
-- Transfer normalization: we canonicalize transfer types to remove perspective differences between sources.
-- Configurable tolerances: timestamp and quantity tolerances are parameters, making the engine adaptable to multiple asset types and data qualities.
+ 🚂 Run the reconciliation CLI (uses `data/` files and writes reports to `reports/`):
 
-Where to look in the code 🔎
+```bash
+npm run reconcile
+# or explicitly:
+node scripts/run-reconciliation.js --user data/user_transactions.csv --exchange data/exchange_transactions.csv
 
-- `src/services/ingestionService.js` — CSV parsing, normalization, and data-quality tagging
-- `src/services/matchingService.js` — the reconciliation algorithm and scoring rules
-- `src/services/reportService.js` — CSV exporters for reports and quality issues
-- `scripts/run-reconciliation.js` — CLI runner (connects to configured MongoDB)
-- `scripts/run-reconciliation-memory.js` — in-memory convenience runner (no external Mongo required)
+```
 
-Suggested next steps 🚀
+ 🧠 If you don't have Docker, run using an in-memory Mongo (generates outputs under `reports-memory/`):
 
-- Add pagination/filtering to the API for very large runs
-- Add a Postman collection or OpenAPI spec for easier API exploration
-- Add streaming CSV output to handle very large inputs without loading everything into memory
+```bash
+node scripts/run-reconciliation-memory.js
 
-License & acknowledgements 📜
+```
 
-This is a take-home exercise repository. Feel free to reuse the approach and patterns for similar reconciliation tasks.
+**Sample output produced by `node scripts/run-reconciliation-memory.js` (generated during test run):**
 
-Happy reconciling ✨
+ 📄 **Generated report files:**
+ `reports-memory/6a113a9f722cd1ade073e115-reconciliation-report.csv`
+ `reports-memory/6a113a9f722cd1ade073e115-unmatched-only.csv`
+ `reports-memory/6a113a9f722cd1ade073e115-quality-issues.csv`
+
+
+ 📈 **Summary counts from the reconciliation run:**
+ ✅ matched: 21
+ ⚠️ conflicting: 1
+ ❌ unmatched (user only): 4
+ ❌ unmatched (exchange only): 3
+
+
+
+ 💡 If you see `MongooseServerSelectionError: connect ECONNREFUSED 127.0.0.1:27017`, MongoDB is not running locally — either start Docker or use the in-memory helper above.
+
 
 
